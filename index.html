@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulator Harga — Multi Produk</title>
+<style>
+:root{--navy:#1F4E79;--navy2:#2E6FAD;--blue-pale:#D6E4F0;--green-pale:#E2EFDA;--yellow:#FFF9E6;--red-pale:#FDECEA;--text:#1a1a2e;--muted:#5a6478;--border:#d0d8e4;--bg:#f0f4fa;--white:#fff;--green:#1a7a4a;--red:#c0392b;--radius:10px;--shadow:0 2px 14px rgba(31,78,121,0.09)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+header{background:var(--navy);color:#fff;padding:1.2rem 1.8rem;display:flex;align-items:center;gap:.9rem}
+header h1{font-size:1.25rem;font-weight:700}
+header p{font-size:.78rem;opacity:.65;margin-top:2px}
+
+.tabs{background:var(--navy);display:flex;padding:0 1.8rem;border-bottom:2px solid rgba(255,255,255,.07)}
+.tab-btn{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.5);font-size:.82rem;font-weight:600;padding:.65rem 1.2rem;border-bottom:3px solid transparent;transition:all .18s}
+.tab-btn.active{color:#fff;border-bottom-color:#60b4ff}
+
+.main{max-width:1050px;margin:1.6rem auto;padding:0 1.2rem 3rem}
+
+/* Global settings bar */
+.settings-bar{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);padding:1rem 1.4rem;margin-bottom:1.4rem}
+.settings-bar h3{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--navy);margin-bottom:.8rem}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.8rem}
+.s-field label{display:block;font-size:.74rem;color:var(--muted);margin-bottom:3px;font-weight:600}
+.s-field input{width:100%;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:.88rem;font-weight:700;color:var(--navy);background:var(--yellow);text-align:right;outline:none;transition:border-color .15s}
+.s-field input:focus{border-color:var(--navy2);background:#fff}
+.s-field .unit{font-size:.72rem;color:var(--muted);margin-top:2px;text-align:right}
+
+/* Summary cards */
+.summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem;margin-bottom:1.4rem}
+.metric{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:.9rem 1rem;text-align:center;box-shadow:var(--shadow)}
+.metric label{display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:5px}
+.metric span{display:block;font-size:1.3rem;font-weight:800;color:var(--navy)}
+.metric.green span{color:var(--green)}
+.metric.red span{color:var(--red)}
+
+/* Toolbar */
+.toolbar{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center}
+.btn{padding:.45rem .95rem;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--text);transition:all .15s;display:flex;align-items:center;gap:5px}
+.btn:hover{background:var(--blue-pale);border-color:var(--navy2)}
+.btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn.primary:hover{background:var(--navy2)}
+.btn.danger{color:var(--red);border-color:#f5c6c6}
+.btn.danger:hover{background:var(--red-pale)}
+.search-box{margin-left:auto;padding:5px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem;outline:none;width:190px;background:var(--white)}
+.search-box:focus{border-color:var(--navy2)}
+
+/* Table */
+.table-wrap{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--navy);color:#fff}
+th{padding:.65rem .7rem;font-size:.74rem;font-weight:700;text-align:left;white-space:nowrap;letter-spacing:.03em}
+th.num{text-align:right}
+tbody tr{border-bottom:1px solid #eef2f8;transition:background .12s}
+tbody tr:hover{background:#f5f8fd}
+tbody tr.selected{background:#eef5ff}
+td{padding:.55rem .7rem;font-size:.82rem;vertical-align:middle}
+td.num{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+td.name-cell{min-width:140px}
+td input.cell-input{width:100%;padding:3px 6px;border:1.5px solid transparent;border-radius:5px;font-size:.82rem;background:transparent;outline:none;font-family:inherit}
+td input.cell-input:focus{border-color:var(--navy2);background:var(--yellow)}
+td input.cell-input.num{text-align:right;font-weight:600}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700}
+.badge.profit{background:var(--green-pale);color:#1a5c35}
+.badge.loss{background:var(--red-pale);color:var(--red)}
+.badge.zero{background:#f0f0f0;color:#666}
+.row-actions{display:flex;gap:4px;justify-content:center}
+.icon-btn{background:none;border:none;cursor:pointer;padding:3px 6px;border-radius:4px;font-size:.82rem;color:var(--muted);transition:all .15s}
+.icon-btn:hover{background:var(--blue-pale);color:var(--navy)}
+.icon-btn.del:hover{background:var(--red-pale);color:var(--red)}
+
+/* Empty state */
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--muted)}
+.empty-state div{font-size:2.5rem;margin-bottom:.5rem}
+.empty-state p{font-size:.88rem}
+
+/* Modal / drawer */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--white);border-radius:14px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;padding:1.6rem}
+.modal h2{font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:1.2rem;display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--muted);padding:2px 6px;border-radius:4px}
+.modal-close:hover{background:#f0f0f0}
+.detail-section{margin-bottom:1rem}
+.detail-section h4{font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--navy);padding:.45rem .8rem;background:var(--navy);color:#fff;border-radius:6px 6px 0 0;margin-bottom:0}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:.4rem .8rem;border-bottom:1px solid #eef2f8;font-size:.84rem}
+.detail-row:last-child{border-bottom:none}
+.detail-row.highlight{background:var(--blue-pale);font-weight:700}
+.detail-row.profit{background:var(--green-pale)}
+.detail-row.loss-bg{background:var(--red-pale)}
+.detail-val{font-weight:700;font-variant-numeric:tabular-nums}
+.detail-val.red{color:var(--red)}
+.detail-val.green{color:var(--green)}
+
+/* CSV panel */
+.csv-area{width:100%;height:180px;border:1.5px solid var(--border);border-radius:8px;padding:.7rem;font-size:.8rem;font-family:monospace;outline:none;resize:vertical}
+.csv-area:focus{border-color:var(--navy2)}
+.csv-hint{font-size:.75rem;color:var(--muted);margin-top:.4rem;line-height:1.6}
+
+/* Target panel */
+.target-note{background:var(--blue-pale);border-left:4px solid var(--navy);border-radius:0 6px 6px 0;padding:.7rem 1rem;font-size:.8rem;color:#1a3a5c;margin-bottom:1rem;line-height:1.6}
+
+@media(max-width:680px){
+  .summary-row{grid-template-columns:1fr 1fr}
+  .settings-grid{grid-template-columns:1fr 1fr}
+  th:nth-child(n+6):not(:last-child){display:none}
+  td:nth-child(n+6):not(:last-child){display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><rect width="34" height="34" rx="8" fill="rgba(255,255,255,.12)"/><path d="M7 26L13 17L19 22L26 10" stroke="#60b4ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="10" r="2.2" fill="#60b4ff"/></svg>
+  <div><h1>Kalkulator Harga — Multi Produk</h1><p>Analisis margin &amp; harga target untuk banyak produk sekaligus</p></div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('listing',this)">📋 Listing Produk</button>
+  <button class="tab-btn" onclick="switchTab('target',this)">🎯 Harga Target</button>
+  <button class="tab-btn" onclick="switchTab('import',this)">📥 Import CSV</button>
+</div>
+
+<div class="main">
+
+<!-- ── GLOBAL SETTINGS ── -->
+<div class="settings-bar">
+  <h3>⚙️ Biaya Global (berlaku untuk semua produk)</h3>
+  <div class="settings-grid">
+    <div class="s-field"><label>Biaya Admin</label><input type="number" id="g_admin" value="18.25" step="0.01" oninput="recalcAll()"><div class="unit">% dari harga jual</div></div>
+    <div class="s-field"><label>Biaya Proses Pesanan</label><input type="number" id="g_proses" value="1250" oninput="recalcAll()"><div class="unit">Rp (nominal)</div></div>
+    <div class="s-field"><label>Pajak</label><input type="number" id="g_pajak" value="0.5" step="0.01" oninput="recalcAll()"><div class="unit">% dari setelah proses</div></div>
+    <div class="s-field"><label>Biaya Variabel</label><input type="number" id="g_var" value="2000" oninput="recalcAll()"><div class="unit">Rp per produk</div></div>
+    <div class="s-field"><label>Biaya Tetap</label><input type="number" id="g_tetap" value="1000" oninput="recalcAll()"><div class="unit">Rp per produk</div></div>
+  </div>
+</div>
+
+<!-- ── SUMMARY ── -->
+<div class="summary-row">
+  <div class="metric"><label>Total Produk</label><span id="sm_total">0</span></div>
+  <div class="metric green"><label>Produk Profit</label><span id="sm_profit">0</span></div>
+  <div class="metric red"><label>Produk Rugi</label><span id="sm_rugi">0</span></div>
+  <div class="metric"><label>Rata-rata Margin</label><span id="sm_avg_margin">0%</span></div>
+</div>
+
+<!-- ════════ PANEL: LISTING ════════ -->
+<div id="panel-listing" class="panel-content">
+  <div class="toolbar">
+    <button class="btn primary" onclick="addRow()">+ Tambah Produk</button>
+    <button class="btn" onclick="duplicateSelected()">⧉ Duplikat</button>
+    <button class="btn danger" onclick="deleteSelected()">✕ Hapus Dipilih</button>
+    <button class="btn" onclick="exportCSV()">↓ Export CSV</button>
+    <input class="search-box" type="text" placeholder="🔍 Cari produk..." oninput="filterTable(this.value)">
+  </div>
+
+  <div class="table-wrap">
+    <table id="prod-table">
+      <thead>
+        <tr>
+          <th style="width:32px"><input type="checkbox" id="chk-all" onchange="toggleAll(this)"></th>
+          <th>#</th>
+          <th>Nama Produk</th>
+          <th class="num">Harga Beli (Rp)</th>
+          <th class="num">Harga Jual (Rp)</th>
+          <th class="num">Pendapatan Bersih</th>
+          <th class="num">Total Biaya</th>
+          <th class="num">Laba</th>
+          <th class="num">Margin</th>
+          <th style="width:70px;text-align:center">Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="prod-body"></tbody>
+    </table>
+    <div id="empty-state" class="empty-state">
+      <div>📦</div>
+      <p>Belum ada produk. Klik <strong>+ Tambah Produk</strong> atau <strong>Import CSV</strong>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ PANEL: TARGET ════════ -->
+<div id="panel-target" class="panel-content" style="display:none">
+  <div class="target-note">
+    Panel ini menghitung <strong>harga jual minimum</strong> yang harus ditetapkan agar mencapai margin target. Biaya global di atas tetap digunakan. Ubah target margin di kolom tabel.
+  </div>
+  <div class="table-wrap">
+    <table id="target-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nama Produk</th>
+          <th class="num">Harga Beli (Rp)</th>
+          <th class="num">Target Margin (%)</th>
+          <th class="num">Harga Jual Minimum</th>
+          <th class="num">Pendapatan Bersih</th>
+          <th class="num">Laba</th>
+          <th style="width:50px;text-align:center">Detail</th>
+        </tr>
+      </thead>
+      <tbody id="target-body"></tbody>
+    </table>
+    <div id="target-empty" class="empty-state"><div>🎯</div><p>Tambah produk di tab <strong>Listing Produk</strong> terlebih dahulu.</p></div>
+  </div>
+</div>
+
+<!-- ════════ PANEL: IMPORT ════════ -->
+<div id="panel-import" class="panel-content" style="display:none">
+  <div class="settings-bar">
+    <h3>📥 Import dari CSV / Paste Excel</h3>
+    <p style="font-size:.8rem;color:var(--muted);margin-bottom:.8rem">Paste data dari Excel atau CSV. Kolom: <code style="background:#eee;padding:1px 5px;border-radius:3px">Nama Produk, Harga Beli, Harga Jual</code> (header boleh ada atau tidak)</p>
+    <textarea class="csv-area" id="csv-input" placeholder="Contoh:
+Baju Polos,25000,35000
+Celana Jeans,80000,120000
+Kaos Oblong,15000,28000
+
+Atau paste langsung dari Excel (3 kolom: nama, harga beli, harga jual)"></textarea>
+    <div class="csv-hint">
+      ✅ Pisahkan kolom dengan <strong>koma (,)</strong> atau <strong>tab</strong> (hasil copy dari Excel)<br>
+      ✅ Satu baris = satu produk<br>
+      ✅ Data yang diimport akan <strong>ditambahkan</strong> ke produk yang sudah ada
+    </div>
+    <div style="margin-top:.8rem;display:flex;gap:.6rem">
+      <button class="btn primary" onclick="importCSV()">⬆ Import Sekarang</button>
+      <button class="btn" onclick="document.getElementById('csv-input').value=''">✕ Bersihkan</button>
+    </div>
+    <div id="import-msg" style="margin-top:.6rem;font-size:.82rem;display:none"></div>
+  </div>
+
+  <div class="settings-bar">
+    <h3>📂 Upload File CSV</h3>
+    <input type="file" id="file-input" accept=".csv,.txt" onchange="handleFile(this)" style="font-size:.82rem">
+  </div>
+</div>
+
+</div><!-- .main -->
+
+<!-- ════════ DETAIL MODAL ════════ -->
+<div class="overlay" id="detail-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2 id="modal-title">Detail Produk <button class="modal-close" onclick="closeModal()">✕</button></h2>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+let products = [];
+let nextId = 1;
+
+const fmt = v => 'Rp\u00a0' + Math.round(v).toLocaleString('id-ID');
+const fmtPct = v => (typeof v === 'number' ? v.toFixed(2) : '0.00').replace('.',',') + '%';
+const fmtNum = v => Math.round(v).toLocaleString('id-ID');
+
+function getGlobals() {
+  return {
+    admin:  (+document.getElementById('g_admin').value  || 0) / 100,
+    proses: +document.getElementById('g_proses').value  || 0,
+    pajak:  (+document.getElementById('g_pajak').value  || 0) / 100,
+    varB:   +document.getElementById('g_var').value     || 0,
+    tetap:  +document.getElementById('g_tetap').value   || 0,
+  };
+}
+
+function calcProduct(modal, jual, g) {
+  const adminNom    = jual * g.admin;
+  const afterAdmin  = jual - adminNom;
+  const afterProses = afterAdmin - g.proses;
+  const pajakNom    = afterProses * g.pajak;
+  const bersih      = afterProses - pajakNom;
+  const totalBiaya  = modal + g.varB + g.tetap;
+  const laba        = bersih - totalBiaya;
+  const margin      = jual > 0 ? (laba / jual) * 100 : 0;
+  return { adminNom, afterAdmin, afterProses, pajakNom, bersih, totalBiaya, laba, margin };
+}
+
+function calcTarget(modal, targetMargin, g) {
+  const mg = targetMargin / 100;
+  const denom = (1 - g.admin) * (1 - g.pajak) - mg;
+  if (denom <= 0) return null;
+  const hj = (g.proses * (1 - g.pajak) + modal + g.varB + g.tetap) / denom;
+  return hj;
+}
+
+function addRow(name='', modal=25000, jual=35000, targetMargin=10) {
+  products.push({ id: nextId++, name: name || 'Produk ' + nextId, modal, jual, targetMargin });
+  renderAll();
+}
+
+function deleteRow(id) {
+  products = products.filter(p => p.id !== id);
+  renderAll();
+}
+
+function deleteSelected() {
+  const checked = [...document.querySelectorAll('.row-chk:checked')].map(c => +c.dataset.id);
+  if (!checked.length) return;
+  products = products.filter(p => !checked.includes(p.id));
+  renderAll();
+}
+
+function duplicateSelected() {
+  const checked = [...document.querySelectorAll('.row-chk:checked')].map(c => +c.dataset.id);
+  const toAdd = products.filter(p => checked.includes(p.id));
+  toAdd.forEach(p => products.push({ id: nextId++, name: p.name + ' (copy)', modal: p.modal, jual: p.jual, targetMargin: p.targetMargin }));
+  renderAll();
+}
+
+function toggleAll(cb) {
+  document.querySelectorAll('.row-chk').forEach(c => c.checked = cb.checked);
+}
+
+function filterTable(q) {
+  const rows = document.querySelectorAll('#prod-body tr');
+  rows.forEach(r => {
+    const name = r.querySelector('.cell-name')?.value?.toLowerCase() || '';
+    r.style.display = name.includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+
+function recalcAll() { renderAll(); }
+
+function renderAll() {
+  renderListing();
+  renderTarget();
+  updateSummary();
+}
+
+function renderListing() {
+  const g = getGlobals();
+  const tbody = document.getElementById('prod-body');
+  const empty = document.getElementById('empty-state');
+  tbody.innerHTML = '';
+  empty.style.display = products.length ? 'none' : 'block';
+
+  products.forEach((p, idx) => {
+    const c = calcProduct(p.modal, p.jual, g);
+    const marginClass = c.margin > 0 ? 'profit' : c.margin < 0 ? 'loss' : 'zero';
+    const labaColor = c.laba >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="checkbox" class="row-chk" data-id="${p.id}"></td>
+      <td style="color:var(--muted);font-size:.78rem">${idx+1}</td>
+      <td class="name-cell"><input class="cell-input cell-name" value="${escHtml(p.name)}" onchange="updateField(${p.id},'name',this.value)" oninput="updateField(${p.id},'name',this.value)"></td>
+      <td><input class="cell-input num" type="number" value="${p.modal}" onchange="updateField(${p.id},'modal',+this.value)" oninput="updateField(${p.id},'modal',+this.value)"></td>
+      <td><input class="cell-input num" type="number" value="${p.jual}" onchange="updateField(${p.id},'jual',+this.value)" oninput="updateField(${p.id},'jual',+this.value)"></td>
+      <td class="num">${fmt(c.bersih)}</td>
+      <td class="num">${fmt(c.totalBiaya)}</td>
+      <td class="num" style="${labaColor}">${c.laba < 0 ? '−' : ''}${fmt(Math.abs(c.laba))}</td>
+      <td class="num"><span class="badge ${marginClass}">${fmtPct(c.margin)}</span></td>
+      <td>
+        <div class="row-actions">
+          <button class="icon-btn" onclick="showDetail(${p.id})" title="Detail">🔍</button>
+          <button class="icon-btn del" onclick="deleteRow(${p.id})" title="Hapus">✕</button>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderTarget() {
+  const g = getGlobals();
+  const tbody = document.getElementById('target-body');
+  const empty = document.getElementById('target-empty');
+  tbody.innerHTML = '';
+  empty.style.display = products.length ? 'none' : 'block';
+
+  products.forEach((p, idx) => {
+    const hj = calcTarget(p.modal, p.targetMargin, g);
+    const hjDisplay = hj !== null ? fmt(hj) : '<span style="color:var(--red)">Tidak valid</span>';
+    let bersih = 0, laba = 0;
+    if (hj !== null) {
+      const c = calcProduct(p.modal, hj, g);
+      bersih = c.bersih; laba = c.laba;
+    }
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:var(--muted);font-size:.78rem">${idx+1}</td>
+      <td class="name-cell" style="font-weight:600">${escHtml(p.name)}</td>
+      <td class="num">${fmt(p.modal)}</td>
+      <td><input class="cell-input num" type="number" value="${p.targetMargin}" step="0.1" min="0" onchange="updateField(${p.id},'targetMargin',+this.value)" oninput="updateField(${p.id},'targetMargin',+this.value)"></td>
+      <td class="num" style="font-weight:800;color:var(--navy)">${hjDisplay}</td>
+      <td class="num">${hj!==null?fmt(bersih):'-'}</td>
+      <td class="num" style="color:var(--green)">${hj!==null?fmt(laba):'-'}</td>
+      <td style="text-align:center"><button class="icon-btn" onclick="showDetailTarget(${p.id})" title="Detail">🔍</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateSummary() {
+  const g = getGlobals();
+  let profit = 0, rugi = 0, totalMargin = 0;
+  products.forEach(p => {
+    const c = calcProduct(p.modal, p.jual, g);
+    if (c.laba > 0) profit++; else if (c.laba < 0) rugi++;
+    totalMargin += c.margin;
+  });
+  const avg = products.length ? totalMargin / products.length : 0;
+  document.getElementById('sm_total').textContent = products.length;
+  document.getElementById('sm_profit').textContent = profit;
+  document.getElementById('sm_rugi').textContent = rugi;
+  document.getElementById('sm_avg_margin').textContent = fmtPct(avg);
+  const avgEl = document.getElementById('sm_avg_margin');
+  avgEl.style.color = avg >= 0 ? 'var(--green)' : 'var(--red)';
+}
+
+function updateField(id, field, val) {
+  const p = products.find(x => x.id === id);
+  if (p) { p[field] = val; renderAll(); }
+}
+
+function showDetail(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  const g = getGlobals();
+  const c = calcProduct(p.modal, p.jual, g);
+  document.getElementById('modal-title').innerHTML = `📦 ${escHtml(p.name)} <button class="modal-close" onclick="closeModal()">✕</button>`;
+  document.getElementById('modal-body').innerHTML = buildDetailHtml(p, g, c, p.jual);
+  document.getElementById('detail-overlay').classList.add('open');
+}
+
+function showDetailTarget(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  const g = getGlobals();
+  const hj = calcTarget(p.modal, p.targetMargin, g);
+  if (!hj) { alert('Parameter tidak valid untuk menghitung harga target.'); return; }
+  const c = calcProduct(p.modal, hj, g);
+  document.getElementById('modal-title').innerHTML = `🎯 ${escHtml(p.name)} — Target ${fmtPct(p.targetMargin)} <button class="modal-close" onclick="closeModal()">✕</button>`;
+  document.getElementById('modal-body').innerHTML = buildDetailHtml(p, g, c, hj, true, p.targetMargin);
+  document.getElementById('detail-overlay').classList.add('open');
+}
+
+function buildDetailHtml(p, g, c, jual, isTarget=false, targetMg=0) {
+  const labaClass = c.laba >= 0 ? 'profit' : 'loss-bg';
+  return `
+    <div class="detail-section">
+      <h4>Rincian Potongan Platform</h4>
+      <div class="detail-row"><span>${isTarget ? '🎯 Harga Jual Target' : 'Harga Jual'}</span><span class="detail-val">${fmt(jual)}</span></div>
+      <div class="detail-row"><span>(−) Biaya Admin (${fmtPct(g.admin*100)})</span><span class="detail-val red">−${fmt(c.adminNom)}</span></div>
+      <div class="detail-row highlight"><span>Setelah Admin</span><span class="detail-val">${fmt(c.afterAdmin)}</span></div>
+      <div class="detail-row"><span>(−) Biaya Proses Pesanan</span><span class="detail-val red">−${fmt(g.proses)}</span></div>
+      <div class="detail-row highlight"><span>Setelah Proses</span><span class="detail-val">${fmt(c.afterProses)}</span></div>
+      <div class="detail-row"><span>(−) Pajak (${fmtPct(g.pajak*100)})</span><span class="detail-val red">−${fmt(c.pajakNom)}</span></div>
+      <div class="detail-row highlight"><span><strong>Pendapatan Bersih</strong></span><span class="detail-val green">${fmt(c.bersih)}</span></div>
+    </div>
+    <div class="detail-section">
+      <h4>Biaya Total</h4>
+      <div class="detail-row"><span>Modal (Harga Beli)</span><span class="detail-val">${fmt(p.modal)}</span></div>
+      <div class="detail-row"><span>Biaya Variabel</span><span class="detail-val">${fmt(g.varB)}</span></div>
+      <div class="detail-row"><span>Biaya Tetap</span><span class="detail-val">${fmt(g.tetap)}</span></div>
+      <div class="detail-row highlight"><span><strong>Total Biaya</strong></span><span class="detail-val red">${fmt(c.totalBiaya)}</span></div>
+    </div>
+    <div class="detail-section">
+      <h4>Hasil Akhir</h4>
+      <div class="detail-row ${labaClass}"><span><strong>Laba Bersih</strong></span><span class="detail-val ${c.laba>=0?'green':'red'}">${c.laba<0?'−':''}${fmt(Math.abs(c.laba))}</span></div>
+      <div class="detail-row ${labaClass}"><span><strong>Margin</strong></span><span class="detail-val ${c.margin>=0?'green':'red'}">${fmtPct(c.margin)}</span></div>
+      ${isTarget ? `<div class="detail-row"><span>Target Margin</span><span class="detail-val">${fmtPct(targetMg)}</span></div>` : ''}
+    </div>`;
+}
+
+function closeModal() {
+  document.getElementById('detail-overlay').classList.remove('open');
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.panel-content').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).style.display = 'block';
+  el.classList.add('active');
+}
+
+function importCSV() {
+  const raw = document.getElementById('csv-input').value.trim();
+  if (!raw) return;
+  const lines = raw.split('\n').filter(l => l.trim());
+  let count = 0;
+  lines.forEach(line => {
+    const parts = line.split(/[\t,]/).map(s => s.trim().replace(/^"|"$/g,''));
+    if (parts.length < 2) return;
+    const name  = parts[0];
+    const modal = parseFloat(parts[1].replace(/[^0-9.]/g,'')) || 0;
+    const jual  = parts[2] ? parseFloat(parts[2].replace(/[^0-9.]/g,'')) || 0 : 0;
+    if (!name || isNaN(modal)) return;
+    const lowerName = name.toLowerCase();
+    if (['nama','name','produk'].includes(lowerName)) return;
+    products.push({ id: nextId++, name, modal, jual, targetMargin: 10 });
+    count++;
+  });
+  const msg = document.getElementById('import-msg');
+  msg.style.display = 'block';
+  msg.style.color = count > 0 ? 'var(--green)' : 'var(--red)';
+  msg.textContent = count > 0 ? `✅ ${count} produk berhasil diimport!` : '❌ Tidak ada data valid yang ditemukan.';
+  if (count > 0) renderAll();
+}
+
+function handleFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('csv-input').value = e.target.result;
+  };
+  reader.readAsText(file);
+}
+
+function exportCSV() {
+  const g = getGlobals();
+  let csv = 'Nama Produk,Harga Beli,Harga Jual,Pendapatan Bersih,Total Biaya,Laba,Margin (%)\n';
+  products.forEach(p => {
+    const c = calcProduct(p.modal, p.jual, g);
+    csv += `"${p.name}",${p.modal},${p.jual},${Math.round(c.bersih)},${Math.round(c.totalBiaya)},${Math.round(c.laba)},${c.margin.toFixed(2)}\n`;
+  });
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'kalkulator_produk.csv';
+  a.click();
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Sample data
+[
+  ['Baju Polos', 25000, 35000],
+  ['Celana Jeans', 80000, 120000],
+  ['Kaos Oblong', 15000, 28000],
+  ['Jaket Parasut', 150000, 220000],
+  ['Topi Baseball', 30000, 55000],
+].forEach(([n,m,j]) => products.push({id:nextId++, name:n, modal:m, jual:j, targetMargin:10}));
+
+renderAll();
+</script>
+</body>
+</html>
